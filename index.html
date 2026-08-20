@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
   <title>纸房子：放学后的对决</title>
   <style>
-    :root { --ink:#171412; --paper:#f2ead9; --red:#e64b3c; --blue:#3466a8; --gold:#f5c451; }
+    :root { --ink:#171412; --paper:#f2ead9; --red:#e64b3c; --blue:#3466a8; --gold:#f5c451; --font-ui:system-ui,-apple-system,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC","Noto Sans SC",sans-serif; --font-display:"Arial Black","Segoe UI Black",var(--font-ui); }
     * { box-sizing:border-box; }
-    html,body { margin:0; width:100%; min-height:100%; background:#151311; color:var(--ink); font-family:"Microsoft YaHei","Noto Sans SC",sans-serif; overflow:hidden; touch-action:none; }
+    html,body { margin:0; width:100%; min-height:100%; background:#151311; color:var(--ink); font-family:var(--font-ui); font-synthesis:none; -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; overflow:hidden; touch-action:none; }
     button { font:inherit; }
-    .game-shell { width:100vw; height:100dvh; min-height:520px; display:grid; place-items:center; padding:max(8px,env(safe-area-inset-top)) max(8px,env(safe-area-inset-right)) max(8px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left)); }
+    .game-shell { width:100vw; height:100vh; height:100dvh; min-height:520px; display:grid; place-items:center; padding:max(8px,env(safe-area-inset-top)) max(8px,env(safe-area-inset-right)) max(8px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left)); }
     .game { position:relative; width:min(1180px,100%); height:min(720px,100%); min-height:500px; overflow:hidden; border:3px solid #050505; background:#d8d1c2; box-shadow:0 18px 70px #000a; isolation:isolate; }
     .arena-bg { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; filter:grayscale(1) contrast(.82) brightness(1.1); transform:scale(1.02); }
     .arena-tone { position:absolute; inset:0; background:linear-gradient(#efe8d765 0 52%,#725f4d33 72%,#171412aa 100%),repeating-linear-gradient(105deg,transparent 0 11px,#17141209 12px 13px); }
@@ -72,7 +72,7 @@
     .assist-projectile { position:absolute; z-index:11; bottom:21%; width:clamp(118px,18vw,210px); aspect-ratio:1; object-fit:contain; pointer-events:none; filter:drop-shadow(7px 7px 0 #17141266); transform:translate(-50%,0); }
     .assist-projectile.cpu-shot { transform:translate(-50%,0) scaleX(-1); }
     .assist-projectile::after { content:""; position:absolute; right:90%; top:48%; width:90px; height:8px; background:linear-gradient(90deg,transparent,#fff); }
-    .combat-toast { position:absolute; z-index:28; left:50%; top:30%; transform:translate(-50%,-50%) rotate(-3deg); color:var(--gold); -webkit-text-stroke:5px #171412; paint-order:stroke fill; font:900 clamp(24px,5vw,48px)/1 Impact,"Microsoft YaHei",sans-serif; pointer-events:none; opacity:0; }
+    .combat-toast { position:absolute; z-index:28; left:50%; top:30%; transform:translate(-50%,-50%) rotate(-3deg); color:var(--gold); -webkit-text-stroke:4px #171412; paint-order:stroke fill; font:800 clamp(24px,5vw,48px)/1 var(--font-display); pointer-events:none; opacity:0; }
     .combat-toast.show { animation:combat-toast .62s ease-out; }
     @keyframes combat-toast { 0%{opacity:0;transform:translate(-50%,-50%) scale(.45) rotate(-8deg)}30%{opacity:1;transform:translate(-50%,-50%) scale(1.08) rotate(-3deg)}100%{opacity:0;transform:translate(-50%,-75%) scale(.95)} }
     .ultimate-cut-in { position:absolute; z-index:55; inset:0; overflow:hidden; pointer-events:none; color:#fff; background:#0c0b0a; }
@@ -91,7 +91,7 @@
     .ultimate-cut-in.play .ult-helper { animation:ult-helper .85s .08s cubic-bezier(.16,.8,.18,1) forwards; }
     .ultimate-cut-in.cpu-cut.play .ult-main { animation-name:ult-main-cpu; }
     .ultimate-cut-in.cpu-cut.play .ult-helper { animation-name:ult-helper-cpu; }
-    .ult-title { position:absolute; z-index:4; left:50%; bottom:13%; width:92%; transform:translate(-50%,42px) rotate(-3deg); opacity:0; color:var(--gold); -webkit-text-stroke:clamp(4px,.8vw,9px) #171412; paint-order:stroke fill; font:900 clamp(34px,8vw,94px)/.85 Impact,"Microsoft YaHei",sans-serif; text-align:center; letter-spacing:.04em; }
+    .ult-title { position:absolute; z-index:4; left:50%; bottom:13%; width:92%; transform:translate(-50%,42px) rotate(-3deg); opacity:0; color:var(--gold); -webkit-text-stroke:clamp(3px,.55vw,6px) #171412; paint-order:stroke fill; font:800 clamp(34px,8vw,86px)/1 var(--font-ui); text-align:center; letter-spacing:.02em; }
     .ultimate-cut-in.play .ult-title { animation:ult-title .65s .2s ease-out forwards; }
     @keyframes ult-spin { to{transform:rotate(8deg) scale(1.05)} }
     @keyframes ult-slash { to{transform:translateX(0) skewX(-8deg)} }
@@ -100,7 +100,7 @@
     @keyframes ult-main-cpu { 65%,100%{transform:translateX(0) rotate(3deg) scaleX(-1)} }
     @keyframes ult-helper-cpu { 65%,100%{transform:translateX(0) rotate(-2deg) scaleX(-1)} }
     @keyframes ult-title { 45%,100%{opacity:1;transform:translate(-50%,0) rotate(-3deg)} }
-    .announcer { position:absolute; z-index:30; left:50%; top:48%; transform:translate(-50%,-50%) rotate(-4deg); color:#fff; -webkit-text-stroke:8px #171412; paint-order:stroke fill; font:900 clamp(46px,10vw,112px)/.85 Impact,"Microsoft YaHei",sans-serif; letter-spacing:.05em; text-align:center; pointer-events:none; opacity:0; }
+    .announcer { position:absolute; z-index:30; left:50%; top:48%; transform:translate(-50%,-50%) rotate(-4deg); color:#fff; -webkit-text-stroke:6px #171412; paint-order:stroke fill; font:900 clamp(46px,10vw,112px)/.9 var(--font-display); letter-spacing:.04em; text-align:center; pointer-events:none; opacity:0; }
     .announcer.show { animation:announce 1s ease both; }
     @keyframes announce { 0%{opacity:0;transform:translate(-50%,-50%) scale(2) rotate(-6deg)} 24%,67%{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(-3deg)} 100%{opacity:0;transform:translate(-50%,-50%) scale(.65)} }
     .controls-help { position:absolute; z-index:14; left:18px; bottom:16px; display:flex; gap:7px; color:#f8f2e5; font-size:12px; text-shadow:1px 1px #000; }
@@ -116,7 +116,7 @@
     .overlay.hidden { display:none; }
     .panel { width:min(570px,100%); padding:clamp(23px,5vw,46px); background:var(--paper); border:5px solid #171412; box-shadow:12px 13px #e64b3c,17px 18px #171412; transform:rotate(-.7deg); text-align:center; }
     .eyebrow { font:800 12px/1 monospace; letter-spacing:.28em; color:#a93a31; }
-    h1 { margin:10px 0 4px; font:900 clamp(36px,7vw,68px)/.95 Impact,"Microsoft YaHei",sans-serif; letter-spacing:.02em; }
+    h1 { margin:10px 0 4px; font:800 clamp(36px,7vw,68px)/1 var(--font-ui); letter-spacing:.01em; }
     .subtitle { margin:10px 0 22px; color:#5d554c; }
     .start-btn { border:3px solid #171412; background:#171412; color:#fff; padding:13px 36px; font-weight:900; letter-spacing:.16em; cursor:pointer; box-shadow:5px 6px var(--red); }
     .start-btn:hover { transform:translate(2px,2px); box-shadow:3px 4px var(--red); }
@@ -132,13 +132,17 @@
       .hud { top:max(8px,env(safe-area-inset-top)); left:8px; right:8px; grid-template-columns:1fr 54px 1fr; gap:7px; }
       .timer { width:50px; font-size:27px; border-width:2px; }
       .round-label,.tag { display:none; }
-      .name-line { font-size:15px; }
+      .name-line { font-size:15px; font-weight:700; }
       .bar-frame { height:18px; padding:3px; }
       .stage { bottom:96px; height:65%; }
       .fighter { width:clamp(145px,40vw,210px); }
       .controls-help,.sound { display:none; }
       .mobile-controls { display:flex; }
       .panel { transform:none; box-shadow:7px 8px var(--red),11px 12px #171412; }
+      .combat-toast { -webkit-text-stroke-width:2px; font-weight:700; }
+      .announcer { -webkit-text-stroke-width:3px; }
+      .ult-title { bottom:max(10%,env(safe-area-inset-bottom)); width:88%; font-size:clamp(25px,7.5vw,42px); font-weight:700; line-height:1.15; letter-spacing:0; -webkit-text-stroke-width:2px; }
+      h1,.start-btn,.touch-btn { font-weight:700; }
     }
     @media (max-height:560px) {
       .stage { height:66%; bottom:58px; }
@@ -152,7 +156,7 @@
 <body>
 <main class="game-shell">
   <section class="game" id="game" aria-label="赵颖与钟雅静的格斗游戏">
-    <img class="arena-bg" src="assets/arena.png" alt="操场">
+    <picture><source media="(max-width:760px), (pointer:coarse)" srcset="assets/arena-mobile.webp" type="image/webp"><source srcset="assets/arena.webp" type="image/webp"><img class="arena-bg" src="assets/arena.png" alt="操场"></picture>
     <div class="arena-tone"></div><div class="speed-lines"></div>
     <header class="hud">
       <div class="player-hud">
@@ -196,6 +200,12 @@
   'use strict';
   const $ = id => document.getElementById(id);
   const game = $('game'), stage = $('stage'), announcer = $('announcer'), combatToast = $('combatToast'), ultimateCutIn = $('ultimateCutIn');
+  const supportsWebP=(()=>{try{return document.createElement('canvas').toDataURL('image/webp').startsWith('data:image/webp')}catch{return false}})();
+  const preferredAsset=src=>{
+    if(!supportsWebP)return src;
+    if(src==='assets/arena.png'&&matchMedia('(max-width:760px), (pointer:coarse)').matches)return 'assets/arena-mobile.webp';
+    return src.replace(/\.png$/i,'.webp');
+  };
   const keys = new Set();
   const art = {
     player:{
@@ -218,6 +228,7 @@
   const assetCache = new Map();
   const failedAssets = new Set();
   let assetsReady = false;
+  const loadedAsset=src=>assetCache.get(src)?.src||preferredAsset(src);
   const state = {
     running:false, cinematic:false, time:60, last:0, timerAcc:0, sound:true,
     player:{el:$('player'), img:$('player').querySelector('img'), x:20, hp:100, energy:0, cooldown:0, guard:false, busy:0, comboStep:0, comboExpires:0, counterReadyUntil:0},
@@ -231,16 +242,24 @@
     // Online play used to replace the current frame before the next PNG had
     // arrived, briefly exposing the image alt text. Keep the last good frame
     // unless this one is known to be available.
-    if(!failedAssets.has(src)&&(!assetsReady||cached?.complete&&cached.naturalWidth>0))f.img.src=src;
+    if(!failedAssets.has(src)&&(!assetsReady||cached?.complete&&cached.naturalWidth>0))f.img.src=loadedAsset(src);
   }
   async function preloadAssets(){
     const sources=[...new Set([
       'assets/arena.png',
       ...Object.values(art.player),...Object.values(art.cpu),...Object.values(assistArt)
     ])];
+    let completed=0;
+    const progress=()=>{$('loadStatus').textContent=`正在准备战斗素材 ${Math.round(completed/sources.length*100)}%`};
+    progress();
     const results=await Promise.allSettled(sources.map(src=>new Promise((resolve,reject)=>{
-      const image=new Image();assetCache.set(src,image);
-      image.onload=()=>resolve(src);image.onerror=()=>{failedAssets.add(src);reject(new Error(src))};image.src=src;
+      const image=new Image(),preferred=preferredAsset(src);let triedFallback=false;assetCache.set(src,image);
+      image.onload=()=>{completed++;progress();resolve(src)};
+      image.onerror=()=>{
+        if(!triedFallback&&preferred!==src){triedFallback=true;image.src=src;return;}
+        failedAssets.add(src);completed++;progress();reject(new Error(src));
+      };
+      image.src=preferred;
     })));
     const failures=results.filter(result=>result.status==='rejected');
     if(failures.length){
@@ -356,7 +375,7 @@
   function showUltimate(who,done){
     state.cinematic=true;keys.clear();
     ultimateCutIn.className='ultimate-cut-in '+(who==='cpu'?'cpu-cut ':'')+'play';
-    $('ultMain').src=art[who].special;$('ultHelper').src=assistArt[who];
+    $('ultMain').src=loadedAsset(art[who].special);$('ultHelper').src=loadedAsset(assistArt[who]);
     $('ultMain').alt=who==='player'?'赵颖必杀':'钟雅静必杀';$('ultHelper').alt=who==='player'?'王艺菡':'龚陶然';
     $('ultTitle').textContent=who==='player'?'赵颖 × 王艺菡 · 飞援':'钟雅静 × 龚陶然 · 突击';
     game.classList.add('special-flash');beep(who==='player'?330:260,.32,'sawtooth');
@@ -366,7 +385,7 @@
   }
   function spawnAssist(attacker,defender,who){
     if(!state.running)return;
-    const shot=document.createElement('img'); shot.className='assist-projectile '+(who==='cpu'?'cpu-shot':''); shot.src=assistArt[who]; shot.alt=who==='player'?'王艺菡援助':'龚陶然援助'; stage.appendChild(shot);
+    const shot=document.createElement('img'); shot.className='assist-projectile '+(who==='cpu'?'cpu-shot':''); shot.src=loadedAsset(assistArt[who]); shot.alt=who==='player'?'王艺菡援助':'龚陶然援助'; stage.appendChild(shot);
     const start=attacker.x+(who==='player'?6:-6), end=who==='player'?106:-6, started=performance.now(); let hit=false;
     function fly(now){
       if(!shot.isConnected)return; const t=Math.min(1,(now-started)/720), x=start+(end-start)*t; shot.style.left=x+'%';
@@ -454,7 +473,7 @@
   }
   $('sound').onclick=()=>{state.sound=!state.sound;$('sound').textContent=state.sound?'♪':'×'};
   $('startBtn').onclick=start;$('restartBtn').onclick=start;
-  if(new URLSearchParams(location.search).has('qa'))window.__fightQA={state,attack,launchAssist,counterAttack,guard,setFrame,position,updateHud};
+  if(new URLSearchParams(location.search).has('qa'))window.__fightQA={state,attack,launchAssist,counterAttack,guard,setFrame,position,updateHud,supportsWebP,loadedAsset};
   reset();preloadAssets();
 })();
 </script>

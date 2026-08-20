@@ -17,6 +17,17 @@ const path = require('path');
     const url = 'file:///' + path.resolve(__dirname, 'index.html').replace(/\\/g, '/') + '?qa=1';
     await page.goto(url, { waitUntil: 'load' });
     await page.waitForFunction(() => [...document.images].filter(image=>image.getAttribute('src')).every(image => image.complete && image.naturalWidth > 0));
+    await page.waitForFunction(() => !document.querySelector('#startBtn').disabled);
+    const delivery = await page.evaluate(() => ({
+      webp:window.__fightQA.supportsWebP,
+      fighter:document.querySelector('#player img').src,
+      arena:document.querySelector('.arena-bg').currentSrc,
+      titleStroke:parseFloat(getComputedStyle(document.querySelector('.ult-title')).webkitTextStrokeWidth),
+      titleWeight:parseInt(getComputedStyle(document.querySelector('.ult-title')).fontWeight,10)
+    }));
+    if(delivery.webp&&!delivery.fighter.endsWith('.webp'))errors.push(`${profile.name}: WebP fighter delivery missing`);
+    if(profile.mobile&&delivery.webp&&!delivery.arena.endsWith('arena-mobile.webp'))errors.push(`${profile.name}: mobile arena optimization missing`);
+    if(profile.mobile&&(delivery.titleStroke>2||delivery.titleWeight>700))errors.push(`${profile.name}: mobile ultimate typography is too heavy`);
     await page.click('#startBtn');
     const idleFacing = await page.locator('#player').evaluate(el => ({pose:el.dataset.pose,transform:getComputedStyle(el.querySelector('img')).transform}));
     if(idleFacing.pose!=='idle'||idleFacing.transform==='none')errors.push(`${profile.name}: Zhao Ying idle facing fix missing`);
@@ -88,7 +99,17 @@ const path = require('path');
     if(!(await page.locator('#player').isVisible() && await page.locator('#cpu').isVisible()))errors.push(`${profile.name}: fighter missing`);
     await page.close();
   }
+
+  // A failed WebP request must transparently retry the original PNG assets.
+  const fallbackPage = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true });
+  await fallbackPage.route('**/*.webp', route => route.abort());
+  const fallbackUrl = 'file:///' + path.resolve(__dirname, 'index.html').replace(/\\/g, '/') + '?qa=1';
+  await fallbackPage.goto(fallbackUrl, { waitUntil: 'domcontentloaded' });
+  await fallbackPage.waitForFunction(() => !document.querySelector('#startBtn').disabled);
+  await fallbackPage.click('#startBtn');
+  if(!(await fallbackPage.locator('#player img').getAttribute('src')).endsWith('.png'))errors.push('compatibility: PNG fallback missing');
+  await fallbackPage.close();
   await browser.close();
   if (errors.length) { console.error(errors.join('\n')); process.exit(1); }
-  console.log('QA passed: multi-frame actions, frozen ultimate cut-ins, both helpers, facing fix, counter, desktop/mobile.');
+  console.log('QA passed: combat, facing, mobile typography, WebP delivery, PNG fallback, desktop/mobile.');
 })();
