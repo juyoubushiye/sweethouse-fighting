@@ -20,6 +20,17 @@ const path = require('path');
     await page.click('#startBtn');
     const idleFacing = await page.locator('#player').evaluate(el => ({pose:el.dataset.pose,transform:getComputedStyle(el.querySelector('img')).transform}));
     if(idleFacing.pose!=='idle'||idleFacing.transform==='none')errors.push(`${profile.name}: Zhao Ying idle facing fix missing`);
+    const guardFacing = await page.evaluate(() => {
+      const q=window.__fightQA,p=q.state.player;q.guard(p,true,'player');
+      const facing={pose:p.el.dataset.pose,transform:getComputedStyle(p.img).transform};q.guard(p,false,'player');return facing;
+    });
+    if(guardFacing.pose!=='guard'||guardFacing.transform==='none')errors.push(`${profile.name}: Zhao Ying guard does not face opponent`);
+    const cpuFacing = await page.evaluate(() => {
+      const q=window.__fightQA,c=q.state.cpu,read=()=>getComputedStyle(c.img).transform;
+      q.setFrame(c,'cpu','idle');const idle=read();q.setFrame(c,'cpu','forward');const forward=read();
+      q.setFrame(c,'cpu','guard');const guard=read();q.setFrame(c,'cpu','idle');return {idle,forward,guard};
+    });
+    if(cpuFacing.idle!=='none'||cpuFacing.forward==='none'||cpuFacing.guard!=='none')errors.push(`${profile.name}: Zhong Yajing movement facing normalization missing`);
     await page.evaluate(() => {
       const q=window.__fightQA;q.state.player.x=43;q.state.cpu.x=57;q.state.cpu.think=999999;q.position();
       window.__qaFrames=[];new MutationObserver(()=>window.__qaFrames.push(q.state.player.img.src)).observe(q.state.player.img,{attributes:true,attributeFilter:['src']});

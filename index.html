@@ -37,8 +37,12 @@
     .cpu .fighter-card { clip-path:none; }
     @keyframes breathe { 50%{transform:translateY(-5px) rotate(.5deg)} }
     .portrait { width:100%; height:100%; display:block; object-fit:contain; object-position:center bottom; filter:drop-shadow(5px 7px 0 #17141255); user-select:none; -webkit-user-drag:none; }
-    .cpu .portrait { object-position:center bottom; transform:scaleX(-1); }
-    .fighter:not(.cpu)[data-pose="idle"] .portrait { transform:scaleX(-1); }
+    .cpu .portrait { object-position:center bottom; }
+    .cpu[data-pose="forward"] .portrait,
+    .cpu[data-pose="attack"] .portrait,
+    .cpu[data-pose="kick"] .portrait { transform:scaleX(-1); }
+    .fighter:not(.cpu)[data-pose="idle"] .portrait,
+    .fighter:not(.cpu)[data-pose="guard"] .portrait { transform:scaleX(-1); }
     .fighter::before { content:""; position:absolute; z-index:-1; left:12%; right:12%; bottom:4%; height:68%; background:radial-gradient(ellipse at center,var(--red) 0 42%,transparent 72%); opacity:.4; filter:blur(10px); }
     .fighter.cpu::before { background:radial-gradient(ellipse at center,var(--blue) 0 42%,transparent 72%); }
     .fighter::after { content:""; position:absolute; z-index:-2; left:4%; right:4%; bottom:4%; height:18%; border:3px solid #17141266; border-radius:50%; transform:perspective(200px) rotateX(62deg); }
@@ -116,6 +120,9 @@
     .subtitle { margin:10px 0 22px; color:#5d554c; }
     .start-btn { border:3px solid #171412; background:#171412; color:#fff; padding:13px 36px; font-weight:900; letter-spacing:.16em; cursor:pointer; box-shadow:5px 6px var(--red); }
     .start-btn:hover { transform:translate(2px,2px); box-shadow:3px 4px var(--red); }
+    .start-btn:disabled { cursor:wait; opacity:.58; transform:none; box-shadow:3px 4px #777; }
+    .load-status { min-height:1.4em; margin:-10px 0 18px; color:#746b61; font-size:13px; font-weight:700; }
+    .load-status.error { color:#b2332b; }
     .result { font-size:18px; font-weight:700; margin:12px 0 23px; }
     .game.shake { animation:shake .28s linear; }
     @keyframes shake { 20%{transform:translate(-8px,3px)}40%{transform:translate(7px,-4px)}60%{transform:translate(-5px,-2px)}80%{transform:translate(3px,2px)} }
@@ -177,7 +184,7 @@
       <div class="mobile-group"><button class="touch-btn attack" data-key="j">打</button><button class="touch-btn special-btn" data-key="k">援助</button></div>
     </div>
     <div class="overlay" id="startOverlay">
-      <div class="panel"><div class="eyebrow">PAPER HOUSE · MINI FIGHTER</div><h1>放学后的对决</h1><p class="subtitle">赵颖 VS 钟雅静<br>连续按 J 打出三连；格挡成功后按 J 反击。能量满 40 可呼叫专属援助。</p><button class="start-btn" id="startBtn">开始对决</button></div>
+      <div class="panel"><div class="eyebrow">PAPER HOUSE · MINI FIGHTER</div><h1>放学后的对决</h1><p class="subtitle">赵颖 VS 钟雅静<br>连续按 J 打出三连；格挡成功后按 J 反击。能量满 40 可呼叫专属援助。</p><p class="load-status" id="loadStatus" role="status">正在准备战斗素材…</p><button class="start-btn" id="startBtn" disabled>素材加载中</button></div>
     </div>
     <div class="overlay hidden" id="endOverlay">
       <div class="panel"><div class="eyebrow">RESULT</div><h1 id="resultTitle">赵颖获胜</h1><p class="result" id="resultText"></p><button class="start-btn" id="restartBtn">再来一局</button></div>
@@ -208,6 +215,9 @@
     player:'assets/chibi/helpers/wang-yihan-projectile.png',
     cpu:'assets/chibi/helpers/gong-taoran-projectile.png'
   };
+  const assetCache = new Map();
+  const failedAssets = new Set();
+  let assetsReady = false;
   const state = {
     running:false, cinematic:false, time:60, last:0, timerAcc:0, sound:true,
     player:{el:$('player'), img:$('player').querySelector('img'), x:20, hp:100, energy:0, cooldown:0, guard:false, busy:0, comboStep:0, comboExpires:0, counterReadyUntil:0},
@@ -215,7 +225,34 @@
   };
   let audio;
   function clearFrameTimers(f){(f.frameTimers||[]).forEach(clearTimeout);f.frameTimers=[];}
-  function setFrame(f,who,pose){f.currentPose=pose;f.img.src=art[who][pose];f.el.dataset.pose=pose;}
+  function setFrame(f,who,pose){
+    const src=art[who][pose], cached=assetCache.get(src);
+    f.currentPose=pose;f.el.dataset.pose=pose;
+    // Online play used to replace the current frame before the next PNG had
+    // arrived, briefly exposing the image alt text. Keep the last good frame
+    // unless this one is known to be available.
+    if(!failedAssets.has(src)&&(!assetsReady||cached?.complete&&cached.naturalWidth>0))f.img.src=src;
+  }
+  async function preloadAssets(){
+    const sources=[...new Set([
+      'assets/arena.png',
+      ...Object.values(art.player),...Object.values(art.cpu),...Object.values(assistArt)
+    ])];
+    const results=await Promise.allSettled(sources.map(src=>new Promise((resolve,reject)=>{
+      const image=new Image();assetCache.set(src,image);
+      image.onload=()=>resolve(src);image.onerror=()=>{failedAssets.add(src);reject(new Error(src))};image.src=src;
+    })));
+    const failures=results.filter(result=>result.status==='rejected');
+    if(failures.length){
+      $('loadStatus').textContent=`有 ${failures.length} 个素材加载失败，请刷新页面重试`;
+      $('loadStatus').classList.add('error');
+      $('startBtn').textContent='素材加载失败';
+      return;
+    }
+    assetsReady=true;
+    $('loadStatus').textContent='素材就绪';
+    $('startBtn').disabled=false;$('startBtn').textContent='开始对决';
+  }
   function resetFighter(f, x, who){
     clearTimeout(f.poseTimer); clearTimeout(f.moveTimer); clearFrameTimers(f);
     Object.assign(f,{x,hp:100,energy:0,cooldown:0,guard:false,busy:0,think:0,comboStep:0,comboExpires:0,counterReadyUntil:0,currentPose:'idle'});
@@ -230,6 +267,7 @@
     updateHud(); position();
   }
   function start(){
+    if(!assetsReady)return;
     $('startOverlay').classList.add('hidden'); $('endOverlay').classList.add('hidden');
     reset(); state.running=true; announce('FIGHT!'); requestAnimationFrame(loop);
   }
@@ -416,8 +454,8 @@
   }
   $('sound').onclick=()=>{state.sound=!state.sound;$('sound').textContent=state.sound?'♪':'×'};
   $('startBtn').onclick=start;$('restartBtn').onclick=start;
-  if(new URLSearchParams(location.search).has('qa'))window.__fightQA={state,attack,launchAssist,counterAttack,guard,position,updateHud};
-  reset();
+  if(new URLSearchParams(location.search).has('qa'))window.__fightQA={state,attack,launchAssist,counterAttack,guard,setFrame,position,updateHud};
+  reset();preloadAssets();
 })();
 </script>
 </body>
