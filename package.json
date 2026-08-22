@@ -1,0 +1,13 @@
+{
+  "name": "sweethouse-fighting",
+  "version": "1.0.0",
+  "private": true,
+  "description": "纸房子角色纯静态离线格斗游戏",
+  "scripts": {
+    "test": "node qa_test.js",
+    "qa": "node qa_test.js"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1"
+  }
+}

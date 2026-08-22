@@ -1,11 +1,10 @@
 const { chromium } = require('playwright');
 const path = require('path');
+const fs = require('fs');
 
 (async () => {
-  const browser = await chromium.launch({
-    headless: true,
-    executablePath: 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
-  });
+  const edgePath = 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
+  const browser = await chromium.launch({ headless: true, ...(fs.existsSync(edgePath)?{executablePath:edgePath}:{}) });
   const errors = [];
   for (const profile of [
     { name: 'desktop', viewport: { width: 1180, height: 720 }, mobile: false },
@@ -29,6 +28,20 @@ const path = require('path');
     if(profile.mobile&&delivery.webp&&!delivery.arena.endsWith('arena-mobile.webp'))errors.push(`${profile.name}: mobile arena optimization missing`);
     if(profile.mobile&&(delivery.titleStroke>2||delivery.titleWeight>700))errors.push(`${profile.name}: mobile ultimate typography is too heavy`);
     await page.click('#startBtn');
+    if(profile.name==='desktop'){
+      await page.evaluate(() => {
+        const cpu=document.querySelector('#cpu');window.__qaAIStates=[cpu.dataset.aiState];
+        new MutationObserver(()=>window.__qaAIStates.push(cpu.dataset.aiState)).observe(cpu,{attributes:true,attributeFilter:['data-ai-state']});
+      });
+      await page.waitForTimeout(5000);
+      const autonomousStates=await page.evaluate(()=>[...new Set(window.__qaAIStates)]);
+      for(const expected of ['charge','approach','combo'])if(!autonomousStates.includes(expected))errors.push(`desktop: autonomous AI never entered ${expected}`);
+    }
+    await page.evaluate(() => {
+      const q=window.__fightQA,p=q.state.player,c=q.state.cpu;p.attackToken++;c.attackToken++;
+      p.busy=0;p.cooldown=0;p.hp=100;c.busy=0;c.cooldown=0;c.hp=100;p.x=20;c.x=80;
+      q.guard(p,false,'player');q.guard(c,false,'cpu');q.setFrame(p,'player','idle');q.setFrame(c,'cpu','idle');q.setAIState(c,'test',1e9);q.position();q.updateHud();
+    });
     const idleFacing = await page.locator('#player').evaluate(el => ({pose:el.dataset.pose,transform:getComputedStyle(el.querySelector('img')).transform}));
     if(idleFacing.pose!=='idle'||idleFacing.transform==='none')errors.push(`${profile.name}: Zhao Ying idle facing fix missing`);
     const guardFacing = await page.evaluate(() => {
@@ -42,8 +55,36 @@ const path = require('path');
       q.setFrame(c,'cpu','guard');const guard=read();q.setFrame(c,'cpu','idle');return {idle,forward,guard};
     });
     if(cpuFacing.idle!=='none'||cpuFacing.forward==='none'||cpuFacing.guard!=='none')errors.push(`${profile.name}: Zhong Yajing movement facing normalization missing`);
+
+    // AI states must have stable, distinct behavior instead of random frame-to-frame choices.
+    const aiBehavior = await page.evaluate(() => {
+      const q=window.__fightQA,c=q.state.cpu,p=q.state.player,now=performance.now();c.attackToken++;p.attackToken++;c.busy=0;c.cooldown=0;c.hp=100;p.busy=0;p.cooldown=0;p.hp=100;p.x=20;c.x=70;
+      q.setAIState(c,'approach',1000,now);q.cpuThink(100,now+1);const approached=c.x<70;
+      const retreatStart=c.x;q.setAIState(c,'retreat',1000,now);q.cpuThink(100,now+2);const retreated=c.x>retreatStart;
+      q.setAIState(c,'guard',1000,now);q.cpuThink(16,now+3);const guarded=c.guard;
+      c.energy=0;q.setAIState(c,'charge',1000,now);q.cpuThink(100,now+4);const charged=c.energy>0&&c.el.classList.contains('charging');
+      p.x=44;c.x=57;c.energy=0;q.setAIState(c,'combo',1000,now);
+      for(let i=0;i<3;i++){q.cpuThink(0,now+10+i);c.attackToken++;c.busy=0;c.cooldown=0}
+      q.cpuThink(0,now+20);const threeHitCombo=c.aiState==='retreat';
+      q.setAIState(c,'test',1e9,now);q.guard(c,false,'cpu');c.x=80;p.x=20;q.position();return {approached,retreated,guarded,charged,threeHitCombo};
+    });
+    if(Object.values(aiBehavior).some(value=>!value))errors.push(`${profile.name}: AI state behavior incomplete ${JSON.stringify(aiBehavior)}`);
+
+    // The same jab must miss outside its active hitbox and connect after moving into range.
     await page.evaluate(() => {
-      const q=window.__fightQA;q.state.player.x=43;q.state.cpu.x=57;q.state.cpu.think=999999;q.position();
+      const q=window.__fightQA,p=q.state.player,c=q.state.cpu;
+      q.setAIState(c,'test',1e9);p.x=25;c.x=55;c.hp=100;p.busy=0;p.cooldown=0;p.comboStep=0;p.comboExpires=0;q.position();q.attack(p,c,'player');
+    });
+    await page.waitForTimeout(180);
+    if((await page.evaluate(()=>window.__fightQA.state.cpu.hp))!==100)errors.push(`${profile.name}: distant jab caused phantom damage`);
+    await page.evaluate(() => {
+      const q=window.__fightQA,p=q.state.player,c=q.state.cpu;
+      p.x=44;c.x=57;p.busy=0;p.cooldown=0;p.comboStep=0;p.comboExpires=0;p.attackToken++;q.position();q.attack(p,c,'player');
+    });
+    await page.waitForTimeout(180);
+    if((await page.evaluate(()=>window.__fightQA.state.cpu.hp))>=100)errors.push(`${profile.name}: close jab missed valid hitbox`);
+    await page.evaluate(() => {
+      const q=window.__fightQA;q.state.player.x=43;q.state.cpu.x=57;q.state.player.busy=0;q.state.player.cooldown=0;q.state.player.comboStep=0;q.state.player.comboExpires=0;q.state.player.attackToken++;q.setAIState(q.state.cpu,'test',1e9);q.position();
       window.__qaFrames=[];new MutationObserver(()=>window.__qaFrames.push(q.state.player.img.src)).observe(q.state.player.img,{attributes:true,attributeFilter:['src']});
     });
 
@@ -100,6 +141,18 @@ const path = require('path');
     await page.close();
   }
 
+  // Critical assets should unlock the game while optional actions keep loading.
+  const stagedPage = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true });
+  await stagedPage.route('**/*.webp', async route => {
+    if(/(03-kick|06-victory|07-special|projectile)\.webp$/i.test(route.request().url()))await new Promise(resolve=>setTimeout(resolve,900));
+    await route.continue();
+  });
+  const stagedUrl = 'file:///' + path.resolve(__dirname, 'index.html').replace(/\\/g, '/') + '?qa=1';
+  await stagedPage.goto(stagedUrl, { waitUntil: 'domcontentloaded' });
+  await stagedPage.waitForFunction(() => !document.querySelector('#startBtn').disabled);
+  if(!/后台加载中/.test(await stagedPage.locator('#loadStatus').textContent()))errors.push('loading: optional assets blocked critical start');
+  await stagedPage.close();
+
   // A failed WebP request must transparently retry the original PNG assets.
   const fallbackPage = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true });
   await fallbackPage.route('**/*.webp', route => route.abort());
@@ -111,5 +164,5 @@ const path = require('path');
   await fallbackPage.close();
   await browser.close();
   if (errors.length) { console.error(errors.join('\n')); process.exit(1); }
-  console.log('QA passed: combat, facing, mobile typography, WebP delivery, PNG fallback, desktop/mobile.');
+  console.log('QA passed: staged loading, AI states, active hitboxes, combat, facing, WebP/PNG, desktop/mobile.');
 })();
