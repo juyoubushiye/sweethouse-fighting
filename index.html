@@ -15,12 +15,14 @@
       <div class="player-hud">
         <div class="name-line"><span>赵颖</span><span class="tag">PLAYER</span></div>
         <div class="bar-frame"><div class="health" id="pHealth"></div></div>
+        <div class="guard-frame"><div class="guard-meter" id="pGuard"></div></div>
         <div class="energy-frame"><div class="energy" id="pEnergy"></div></div>
       </div>
       <div><div class="timer" id="timer">60</div><div class="round-label">ROUND 1</div></div>
       <div class="player-hud right">
         <div class="name-line"><span>钟雅静</span><span class="tag">CPU</span></div>
         <div class="bar-frame"><div class="health" id="cHealth"></div></div>
+        <div class="guard-frame"><div class="guard-meter" id="cGuard"></div></div>
         <div class="energy-frame"><div class="energy" id="cEnergy"></div></div>
       </div>
     </header>
@@ -34,14 +36,35 @@
     <div class="ultimate-cut-in hidden" id="ultimateCutIn" aria-hidden="true">
       <div class="ult-slash"></div><img class="ult-main" id="ultMain" alt=""><img class="ult-helper" id="ultHelper" alt=""><div class="ult-title" id="ultTitle"></div>
     </div>
-    <div class="controls-help"><span class="key">A / D 移动</span><span class="key">J 三连 / 反击</span><span class="key">K 援助</span><span class="key">L 格挡</span></div>
+    <div class="controls-help"><span class="key">A / D 移动 · 后退格挡</span><span class="key">J 轻击</span><span class="key">I / Shift+J 重击</span><span class="key">K 满能量大招</span><span class="key">L 翻滚闪避</span></div>
     <button class="sound" id="sound" aria-label="切换声音">♪</button>
     <div class="mobile-controls">
-      <div class="mobile-group"><button class="touch-btn" data-key="a">◀</button><button class="touch-btn" data-key="d">▶</button><button class="touch-btn" data-key="l">挡</button></div>
-      <div class="mobile-group"><button class="touch-btn attack" data-key="j">打</button><button class="touch-btn special-btn" data-key="k">援助</button></div>
+      <div class="mobile-group"><button class="touch-btn" data-key="a" aria-label="向左移动，背离对手时格挡">◀</button><button class="touch-btn" data-key="d" aria-label="向右移动，背离对手时格挡">▶</button><button class="touch-btn" data-key="l" aria-label="翻滚到对手身后">闪</button></div>
+      <div class="mobile-group action-group"><button class="touch-btn attack" data-key="j" aria-label="轻攻击">轻</button><button class="touch-btn heavy" data-key="i" aria-label="重攻击">重</button><button class="touch-btn special-btn" data-key="k">援助</button></div>
     </div>
     <div class="overlay" id="startOverlay">
-      <div class="panel"><div class="eyebrow">PAPER HOUSE · MINI FIGHTER</div><h1>放学后的对决</h1><p class="subtitle">赵颖 VS 钟雅静<br>连续按 J 打出三连；格挡成功后按 J 反击。能量满 40 可呼叫专属援助。</p><p class="load-status" id="loadStatus" role="status">正在准备战斗素材…</p><button class="start-btn" id="startBtn" disabled>素材加载中</button></div>
+      <div class="panel start-panel"><div class="eyebrow">SWEET HOUSE · MINI FIGHTER</div><h1>决战女通讯录之巅</h1><p class="subtitle">赵颖 VS 钟雅静</p>
+        <details class="manual">
+          <summary>操作说明书 <span>点击展开</span></summary>
+          <div class="manual-body">
+            <section><h2>桌面键位</h2><dl class="key-guide">
+              <div><dt>A / D</dt><dd>左右移动；按住远离对手的方向会后退格挡</dd></div>
+              <div><dt>双击 A / D</dt><dd>向前冲刺或向后撤步</dd></div>
+              <div><dt>J</dt><dd>轻攻击；连续按可打出三段连击</dd></div>
+              <div><dt>I / Shift+J</dt><dd>重攻击，伤害和击退更高</dd></div>
+              <div><dt>L</dt><dd>无敌翻滚，穿过对手到其身后</dd></div>
+              <div><dt>K</dt><dd>能量满 100 后释放援助大招</dd></div>
+            </dl></section>
+            <section><h2>手机操作</h2><dl class="key-guide touch-guide">
+              <div><dt>◀ / ▶</dt><dd>移动；背离对手时自动格挡</dd></div>
+              <div><dt>闪</dt><dd>翻滚闪避并换边</dd></div>
+              <div><dt>轻 / 重</dt><dd>轻攻击连击或重攻击</dd></div>
+              <div><dt>援助</dt><dd>满能量释放大招并清空能量条</dd></div>
+            </dl></section>
+            <p class="manual-tip">格挡成功会出现“可反击”，此时立即轻击即可反击。蓝色细条是防御槽，橙色细条是能量。</p>
+          </div>
+        </details>
+        <p class="load-status" id="loadStatus" role="status">正在准备战斗素材…</p><button class="start-btn" id="startBtn" disabled>素材加载中</button></div>
     </div>
     <div class="overlay hidden" id="endOverlay">
       <div class="panel"><div class="eyebrow">RESULT</div><h1 id="resultTitle">赵颖获胜</h1><p class="result" id="resultText"></p><button class="start-btn" id="restartBtn">再来一局</button></div>
